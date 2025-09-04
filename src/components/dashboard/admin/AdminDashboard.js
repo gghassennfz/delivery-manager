@@ -6,7 +6,6 @@ import AdminSidebar from './AdminSidebar';
 import AdminStatistics from './AdminStatistics';
 import AdminCharts from './AdminCharts';
 import RecentDeliveries from './RecentDeliveries';
-import DeliveryHistory from './DeliveryHistory';
 import DeliveryDetailsModal from './DeliveryDetailsModal';
 import AllDeliveries from './AllDeliveries';
 import DeliveryGuyActivities from './DeliveryGuyActivities';
@@ -268,14 +267,6 @@ const AdminDashboard = () => {
               />
             )}
             
-            {activeView === 'delivery-history' && (
-              <DeliveryHistory 
-                deliveries={deliveries}
-                onAssign={openAssignModal}
-                onViewDetails={handleViewDetails}
-                onDelete={handleDeleteDelivery}
-              />
-            )}
             
             {activeView === 'delivery-guy-activities' && (
               <DeliveryGuyActivities 

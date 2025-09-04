@@ -13,7 +13,7 @@ const DeliveryGuyActivities = ({ deliveries, users, onViewDetails }) => {
 
   // Get delivery guys from users
   const deliveryGuys = useMemo(() => 
-    users.filter(user => user.role === 'delivery'),
+    users.filter(user => user.role === 'delivery-guy'),
     [users]
   );
 
@@ -96,6 +96,16 @@ const DeliveryGuyActivities = ({ deliveries, users, onViewDetails }) => {
     });
   }, [deliveries, selectedDeliveryGuy, searchTerm, dateFilter, startDate, endDate]);
 
+  // Generate professional reference number
+  const generateReference = (delivery) => {
+    if (delivery.reference) return delivery.reference;
+    
+    const date = delivery.createdAt?.toDate ? delivery.createdAt.toDate() : new Date(delivery.createdAt);
+    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+    const timeStr = Math.random().toString().slice(2, 6);
+    return `DLV-${dateStr}-${timeStr}`;
+  };
+
   // Get activity timeline for a delivery
   const getActivityTimeline = (delivery) => {
     const timeline = [];
@@ -104,9 +114,11 @@ const DeliveryGuyActivities = ({ deliveries, users, onViewDetails }) => {
       timeline.push({
         status: 'created',
         label: 'Order Created',
+        description: 'Order placed by project owner',
         date: delivery.createdAt?.toDate ? delivery.createdAt.toDate() : new Date(delivery.createdAt),
         icon: Package,
-        color: 'text-blue-500'
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-100 dark:bg-blue-900'
       });
     }
 
@@ -114,29 +126,35 @@ const DeliveryGuyActivities = ({ deliveries, users, onViewDetails }) => {
       timeline.push({
         status: 'assigned',
         label: 'Assigned to Delivery Guy',
+        description: 'Ready for pickup from project owner',
         date: delivery.assignedAt?.toDate ? delivery.assignedAt.toDate() : new Date(delivery.assignedAt),
         icon: User,
-        color: 'text-purple-500'
+        color: 'text-purple-500',
+        bgColor: 'bg-purple-100 dark:bg-purple-900'
       });
     }
 
     if (delivery.pickedUpAt) {
       timeline.push({
         status: 'picked-up',
-        label: 'Picked Up',
+        label: 'Delivery Guy Picked Up',
+        description: 'Package collected from project owner - delivery started',
         date: delivery.pickedUpAt?.toDate ? delivery.pickedUpAt.toDate() : new Date(delivery.pickedUpAt),
         icon: Truck,
-        color: 'text-blue-500'
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100 dark:bg-blue-900'
       });
     }
 
     if (delivery.inTransitAt) {
       timeline.push({
         status: 'in-transit',
-        label: 'In Transit',
+        label: 'In Transit to Destination',
+        description: 'Package on the way to recipient',
         date: delivery.inTransitAt?.toDate ? delivery.inTransitAt.toDate() : new Date(delivery.inTransitAt),
         icon: Truck,
-        color: 'text-orange-500'
+        color: 'text-orange-500',
+        bgColor: 'bg-orange-100 dark:bg-orange-900'
       });
     }
 
@@ -144,19 +162,23 @@ const DeliveryGuyActivities = ({ deliveries, users, onViewDetails }) => {
       timeline.push({
         status: 'delivered',
         label: 'Delivered Successfully',
+        description: 'Package delivered to recipient',
         date: delivery.deliveredAt?.toDate ? delivery.deliveredAt.toDate() : new Date(delivery.deliveredAt),
         icon: CheckCircle,
-        color: 'text-green-500'
+        color: 'text-green-500',
+        bgColor: 'bg-green-100 dark:bg-green-900'
       });
     }
 
     if (delivery.returnedAt && delivery.status === 'returned') {
       timeline.push({
         status: 'returned',
-        label: 'Returned',
+        label: 'Package Returned',
+        description: 'Delivery unsuccessful - returned to sender',
         date: delivery.returnedAt?.toDate ? delivery.returnedAt.toDate() : new Date(delivery.returnedAt),
         icon: XCircle,
-        color: 'text-red-500'
+        color: 'text-red-500',
+        bgColor: 'bg-red-100 dark:bg-red-900'
       });
     }
 
@@ -343,64 +365,82 @@ const DeliveryGuyActivities = ({ deliveries, users, onViewDetails }) => {
             return (
               <div key={delivery.id} className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
                 {/* Delivery Header */}
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex justify-between items-start mb-6">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {delivery.reference || 'N/A'}
+                    <div className="flex items-center space-x-3 mb-3">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white font-mono">
+                        {generateReference(delivery)}
                       </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(delivery.status)}`}>
-                        {delivery.status}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(delivery.status)}`}>
+                        {delivery.status.toUpperCase()}
                       </span>
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                      <span>Recipient: {delivery.recipientName}</span>
-                      <span>•</span>
-                      <span>Products: {delivery.products?.map(p => p.name).join(', ')}</span>
-                      {deliveryGuy && (
-                        <>
-                          <span>•</span>
-                          <span>Delivery Guy: {deliveryGuy.email}</span>
-                        </>
-                      )}
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="font-medium text-gray-900 dark:text-white">Recipient:</span>
+                          <span className="ml-2 text-gray-600 dark:text-gray-400">{delivery.recipientName}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-900 dark:text-white">Products:</span>
+                          <span className="ml-2 text-gray-600 dark:text-gray-400">{delivery.products?.map(p => p.name).join(', ')}</span>
+                        </div>
+                        {deliveryGuy && (
+                          <div className="md:col-span-2">
+                            <span className="font-medium text-gray-900 dark:text-white">Delivery Guy:</span>
+                            <span className="ml-2 text-gray-600 dark:text-gray-400">{deliveryGuy.email}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <button
                     onClick={() => onViewDetails(delivery)}
-                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                   >
                     <Eye className="h-5 w-5" />
                   </button>
                 </div>
 
                 {/* Activity Timeline */}
-                <div className="relative">
+                <div className="relative pl-4">
+                  <div className="absolute left-7 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-600"></div>
                   {timeline.map((activity, index) => {
                     const Icon = activity.icon;
                     const isLast = index === timeline.length - 1;
                     
                     return (
-                      <div key={activity.status} className="relative flex items-start space-x-3 pb-4">
-                        {/* Timeline line */}
-                        {!isLast && (
-                          <div className="absolute top-8 left-4 w-0.5 h-6 bg-gray-300 dark:bg-gray-600"></div>
-                        )}
-                        
+                      <div key={activity.status} className="relative flex items-start space-x-4 pb-6">
                         {/* Icon */}
-                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600`}>
-                          <Icon className={`h-4 w-4 ${activity.color}`} />
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${activity.bgColor} border-2 border-white dark:border-gray-800 shadow-sm z-10`}>
+                          <Icon className={`h-5 w-5 ${activity.color}`} />
                         </div>
                         
                         {/* Activity Details */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              {activity.label}
-                            </p>
-                            <ArrowRight className="h-3 w-3 text-gray-400" />
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {activity.date.toLocaleString()}
-                            </p>
+                        <div className="flex-1 min-w-0 pb-4">
+                          <div className="bg-white dark:bg-gray-750 rounded-lg border border-gray-200 dark:border-gray-600 p-4 shadow-sm">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-white text-base">
+                                {activity.label}
+                              </h4>
+                              <time className="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap ml-4">
+                                {activity.date.toLocaleDateString('en-US', {
+                                  month: 'numeric',
+                                  day: 'numeric', 
+                                  year: 'numeric'
+                                })}, {activity.date.toLocaleTimeString('en-US', {
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  second: '2-digit',
+                                  hour12: true
+                                })}
+                              </time>
+                            </div>
+                            {activity.description && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {activity.description}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>

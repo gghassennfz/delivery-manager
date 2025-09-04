@@ -88,13 +88,25 @@ const DeliveryGuyDashboard = () => {
   const updateDeliveryStatus = async (deliveryId, newStatus) => {
     setLoading(true);
     try {
-      await updateDoc(doc(db, 'deliveries', deliveryId), {
+      const updates = {
         status: newStatus,
         deliveryGuyId: currentUser.uid,
         deliveryGuyEmail: currentUser.email,
-        updatedAt: new Date(),
-        [`${newStatus}At`]: new Date()
-      });
+        updatedAt: new Date()
+      };
+
+      // Set specific timestamps for each status
+      if (newStatus === 'picked-up') {
+        updates.pickedUpAt = new Date();
+      } else if (newStatus === 'in-transit') {
+        updates.inTransitAt = new Date();
+      } else if (newStatus === 'delivered') {
+        updates.deliveredAt = new Date();
+      } else if (newStatus === 'returned') {
+        updates.returnedAt = new Date();
+      }
+
+      await updateDoc(doc(db, 'deliveries', deliveryId), updates);
     } catch (error) {
       console.error('Error updating delivery status:', error);
     }

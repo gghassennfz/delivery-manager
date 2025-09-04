@@ -36,12 +36,6 @@ const AdminSidebar = ({ activeView, setActiveView }) => {
       description: 'Recent Deliveries'
     },
     {
-      id: 'delivery-history',
-      name: 'History',
-      icon: History,
-      description: 'Full History'
-    },
-    {
       id: 'delivery-guy-activities',
       name: 'Activities',
       icon: Users,
